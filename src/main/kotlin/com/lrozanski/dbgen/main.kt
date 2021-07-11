@@ -48,7 +48,7 @@ fun generate(init: Generator.() -> Unit) {
 
     generator.entries.forEach { tableEntry ->
         transaction {
-            for (i in 0 until tableEntry.rows) {
+            (0 until tableEntry.rows).forEach { _ ->
                 tableEntry.table.insert { insert ->
                     tableEntry.generators.forEach { generator ->
                         insert[generator.column] = generator.generator()
@@ -70,7 +70,7 @@ fun TableEntry.generators(vararg generator: RowGenerator<*>) {
     generators = generator.map { it as RowGenerator<in Any> }
 }
 
-fun main(args: Array<String>) {
+fun main() {
     Database.connect("jdbc:postgresql://localhost:5432/postgres", user = "postgres", password = "postgres")
 
     transaction {
