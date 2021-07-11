@@ -1,10 +1,11 @@
 package com.lrozanski.dbgen
 
 import org.jetbrains.exposed.dao.id.LongIdTable
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.random.Random
-import kotlin.reflect.KClass
 
 enum class PetType {
     DOG,
@@ -20,7 +21,7 @@ class Generator {
     val entries: MutableList<TableEntry> = mutableListOf()
 }
 
-class RowGenerator<T>(val column: Column<T>, val generator: () -> Any)
+class RowGenerator<T>(val column: Column<T>, val generate: () -> Any)
 
 fun stringGenerator(column: Column<String>, lengthRange: IntRange) = RowGenerator(column) {
     val actualLength = lengthRange.random()
@@ -31,8 +32,8 @@ fun stringGenerator(column: Column<String>, lengthRange: IntRange) = RowGenerato
         .joinToString("")
 }
 
-inline fun <reified T : Enum<T>> enumGenerator(column: Column<T>, enumType: KClass<T>) = RowGenerator(column) {
-    val enumConstants = enumType.java.enumConstants
+inline fun <reified T : Enum<*>> enumGenerator(column: Column<T>, vararg allowedValues: T) = RowGenerator(column) {
+    val enumConstants = if (allowedValues.isNotEmpty()) allowedValues else enumValues<T>()
     val index = Random.nextInt(enumConstants.size)
 
     return@RowGenerator enumConstants[index]
@@ -51,7 +52,7 @@ fun generate(init: Generator.() -> Unit) {
             (0 until tableEntry.rows).forEach { _ ->
                 tableEntry.table.insert { insert ->
                     tableEntry.generators.forEach { generator ->
-                        insert[generator.column] = generator.generator()
+                        insert[generator.column] = generator.generate()
                     }
                 }
             }
@@ -71,23 +72,23 @@ fun TableEntry.generators(vararg generator: RowGenerator<*>) {
 }
 
 fun main() {
-    Database.connect("jdbc:postgresql://localhost:5432/postgres", user = "postgres", password = "postgres")
+//    Database.connect("jdbc:postgresql://localhost:5432/postgres", user = "postgres", password = "postgres")
 
-    transaction {
-        addLogger(StdOutSqlLogger)
-        SchemaUtils.create(Pets)
-    }
+//    transaction {
+//        addLogger(StdOutSqlLogger)
+//        SchemaUtils.create(Pets)
+//    }
 
-    println(stringGenerator(Pets.name, 8..16).generator())
-    println(enumGenerator(Pets.type, PetType::class).generator())
+    println(stringGenerator(Pets.name, 8..16).generate())
+    println(enumGenerator(Pets.type).generate())
 
-    generate {
-        table(Pets) {
-            rows = 25
-            generators(
-                stringGenerator(Pets.name, 16..64),
-                enumGenerator(Pets.type, PetType::class)
-            )
-        }
-    }
+//    generate {
+//        table(Pets) {
+//            rows = 25
+//            generators(
+//                stringGenerator(Pets.name, 16..64),
+//                enumGenerator(Pets.type)
+//            )
+//        }
+//    }
 }
