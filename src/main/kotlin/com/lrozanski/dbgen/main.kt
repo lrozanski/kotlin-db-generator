@@ -1,9 +1,7 @@
 package com.lrozanski.dbgen
 
 import org.jetbrains.exposed.dao.id.LongIdTable
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.random.Random
 
@@ -72,23 +70,23 @@ fun TableEntry.generators(vararg generator: RowGenerator<*>) {
 }
 
 fun main() {
-//    Database.connect("jdbc:postgresql://localhost:5432/postgres", user = "postgres", password = "postgres")
+    Database.connect("jdbc:postgresql://localhost:5432/postgres", user = "postgres", password = "postgres")
 
-//    transaction {
-//        addLogger(StdOutSqlLogger)
-//        SchemaUtils.create(Pets)
-//    }
+    transaction {
+        addLogger(StdOutSqlLogger)
+        SchemaUtils.create(Pets)
+    }
 
     println(stringGenerator(Pets.name, 8..16).generate())
     println(enumGenerator(Pets.type).generate())
 
-//    generate {
-//        table(Pets) {
-//            rows = 25
-//            generators(
-//                stringGenerator(Pets.name, 16..64),
-//                enumGenerator(Pets.type)
-//            )
-//        }
-//    }
+    generate {
+        table(Pets) {
+            rows = 25
+            generators(
+                stringGenerator(Pets.name, 16..64),
+                enumGenerator(Pets.type)
+            )
+        }
+    }
 }
